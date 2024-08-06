@@ -5,6 +5,6 @@ Repositorio dedicado para la materia TC2038: Análisis y Diseño de Algoritmos A
 
 ### Integrantes
 - Andrés Martínez - A00227463
-- Yair Salvador - A0125
-- Daniel Barreras - A0125
+- Yair Salvador - A01254673
+- Daniel Barreras - A01254805
 
