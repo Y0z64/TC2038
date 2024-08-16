@@ -62,13 +62,15 @@ private:
 
   // Simple resize function that will double the size of the table
   void resize() {
-    std::vector<std::vector<std::pair<std::string, std::string>>> old_table =
-        table;
+    // Save the table into an old table
+    std::vector<std::vector<std::pair<std::string, std::string>>> old_table = table;
     size = size * 2;
+    // Clear the table and resize it to the new size
     table.clear();
     table.resize(size);
     count = 0;
-
+    
+    // Insert (bucket by bucket) the pairs from the old table into the new table
     for (const auto &bucket : old_table) {
       for (const auto &pair : bucket) {
         insert(pair.first, pair.second);
@@ -80,6 +82,7 @@ public:
   // Initialize the Hashtable to 0 and resize it to the initial value
   HashTable() : size(INITIAL_SIZE), count(0) { table.resize(size); }
 
+  // 
   void insert(const std::string &key, const std::string &value) {
     // Check if the load factor has been reached and resize if necessary
     if ((double)count / size >= LOAD_FACTOR) {
@@ -88,7 +91,7 @@ public:
 
     // Generate a hash index
     int index = hash(key);
-    // Iterate over pairs in the bucket
+    // Iterate over pairs in the bucket obtained from the hash
     for (auto &pair : table[index]) {
       // Check if the key already exists and update the value
       if (pair.first == key) {
