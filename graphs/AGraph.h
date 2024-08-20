@@ -9,7 +9,7 @@ private:
 
 public:
   Graph(int n);
-  void add_edge(int u, int v);
+  void add_edge(int u, int v);  
   void display();
 
   // DFS
