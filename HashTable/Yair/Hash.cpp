@@ -2,16 +2,9 @@
 #include <openssl/evp.h>
 #include <string>
 
-template <class T>
-Hash<T>::Hash() {};
+template <class T> Hash<T>::Hash(){};
 
-template <class T>
-Hash<T>::Hash(const bool ultraSecure) {
-    this->ultraSecure = ultraSecure;
-};
-
-template <class T>
-int Hash<T>::hash(const T &key, const int size) {
+template <class T> int Hash<T>::hash(const T &key, const int size) {
   // Unsigned values are used since at 8-bits they go from 0-255 instead
   // of -128 to 127 Since hash values are usually represented as bytes, we can
   // use unsigned chars to represent bytes correctly as positive values
@@ -36,7 +29,7 @@ int Hash<T>::hash(const T &key, const int size) {
 
       if (EVP_DigestFinal_ex(context, hash, &lengthOfHash)) {
         EVP_MD_CTX_free(context);
- 
+
         uint64_t high = 0;
         uint64_t low = 0;
 
