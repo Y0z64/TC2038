@@ -1,11 +1,11 @@
+#include "Hash.h"
 #include <iostream>
 #include <openssl/evp.h>
+#include <optional>
 #include <string>
 #include <vector>
 
-template <typename K, typename V>
-class HashTable
-{
+template <typename K, typename V> class HashTable {
 private:
   int INITIAL_SIZE = 10;
   double LOAD_FACTOR = 0.8;
@@ -13,21 +13,22 @@ private:
   std::vector<std::vector<std::pair<K, V>>> table;
   int size;
   int count;
+  Hash<K> hasher;
 
-  int hash(const K& key);
+  int hash(const K &k);
 
   // Simple resize function that will double the size of the table
   void resize();
 
 public:
   // Initialize the Hashtable to 0 and resize it to the initial value
-  HashTable() : size(INITIAL_SIZE), count(0) { table.resize(size); };
+  HashTable() : size(INITIAL_SIZE), count(0), hasher() { table.resize(size); };
 
-  void insert(const K& key, const V& value);
+  void insert(const K &key, const V &value);
 
-  V get(const K& key);
+  std::optional<V> get(const K &key);
 
-  void remove(const K& key);
+  void remove(const K &key);
 
   int getSize() const { return size; };
 

@@ -1,55 +1,32 @@
-#include <iostream>
 #include <openssl/evp.h>
-#include <string>
 #include <vector>
 #include <optional>
 #include "HashTableProbbing.h"
 
-struct HashTable::Entry
+template <typename K, typename V>
+struct HashTable<K, V>::Bucket
 {
-  std::string key;
-  std::string value;
+  K& key;
+  V& value;
   bool isOccupied;
 
-  Entry() : isOccupied(false) {}
-  Entry(const std::string &k, const std::string &v, bool occupied)
+  Bucket() : isOccupied(false) {}
+  Bucket(const  K& k, const V& v, bool occupied)
       : key(k), value(v), isOccupied(occupied) {}
 };
 
-int HashTable::hash(const std::string &key)
+template <typename K, typename V>
+int HashTable<K, V>::hash(const K &k)
 {
-  unsigned char hash[EVP_MAX_MD_SIZE];
-  unsigned int lengthOfHash = 0;
-
-  EVP_MD_CTX *context = EVP_MD_CTX_new();
-  if (context != nullptr)
-  {
-    if (EVP_DigestInit_ex(context, EVP_sha256(), nullptr))
-    {
-      if (EVP_DigestUpdate(context, key.c_str(), key.length()))
-      {
-        if (EVP_DigestFinal_ex(context, hash, &lengthOfHash))
-        {
-          EVP_MD_CTX_free(context);
-          int result = 0;
-          for (unsigned int i = 0; i < 8 && i < lengthOfHash; i++)
-          {
-            result = (result << 8) | hash[i];
-          }
-          return result % size;
-        }
-      }
-    }
-    EVP_MD_CTX_free(context);
-  }
-  return 0;
+  return hasher.hash(k, size);
 }
 
-void HashTable::resize()
+template <typename K, typename V>
+void HashTable<K, V>::resize()
 {
-  std::vector<Entry> old_table = table;
+  std::vector<Bucket> old_table = table;
   size *= 2;
-  table = std::vector<Entry>(size);
+  table = std::vector<Bucket>(size);
   count = 0;
 
   for (const auto &entry : old_table)
@@ -61,12 +38,8 @@ void HashTable::resize()
   }
 }
 
-HashTable::HashTable(int initial_size = 10) : size(initial_size), count(0)
-{
-  table.resize(size);
-}
-
-void HashTable::insert(const std::string &key, const std::string &value)
+template <typename K, typename V>
+void HashTable<K, V>::insert(const K& key, const V& value)
 {
   if (static_cast<double>(count) / size >= LOAD_FACTOR)
   {
@@ -85,10 +58,11 @@ void HashTable::insert(const std::string &key, const std::string &value)
   {
     count++;
   }
-  table[index] = Entry(key, value, true);
+  table[index] = Bucket(key, value, true);
 }
 
-std::optional<std::string> HashTable::get(const std::string &key)
+template <typename K, typename V>
+std::optional<K> HashTable<K, V>::get(const K& key)
 {
   int index = hash(key);
   int i = 0;
@@ -104,7 +78,8 @@ std::optional<std::string> HashTable::get(const std::string &key)
   return std::nullopt;
 }
 
-void HashTable::remove(const std::string &key)
+template <typename K, typename V>
+void HashTable<K, V>::remove(const K& key)
 {
   int index = hash(key);
   int i = 0;
@@ -121,6 +96,11 @@ void HashTable::remove(const std::string &key)
   }
 }
 
-int HashTable::getSize() { return size; }
-int HashTable::getCount() { return count; }
-double HashTable::getCurrentLoadFactor() { return static_cast<double>(count) / size; }
+template <typename K, typename V>
+int HashTable<K, V>::getSize() { return size; }
+
+template <typename K, typename V>
+int HashTable<K, V>::getCount() { return count; }
+
+template <typename K, typename V>
+double HashTable<K,V>::getCurrentLoadFactor() { return static_cast<double>(count) / size; }

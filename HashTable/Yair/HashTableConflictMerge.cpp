@@ -2,6 +2,7 @@
 #include <openssl/evp.h>
 #include <string>
 #include <vector>
+#include <optional>
 
 /**
  * Implementación de una Hash Table
@@ -18,54 +19,8 @@
  *    - Se necesita la libreria OpenSSL para compilar
  */
 
-template <typename K, typename V> int HashTable<K, V>::hash(const K &key) {
-  // Unsigned values are used since at 8-bits they go from 0-255 instead
-  // of -128 to 127 Since hash values are usually represented as bytes, we can
-  // use unsigned chars to represent bytes correctly as positive values
-  unsigned char hash[EVP_MAX_MD_SIZE];
-  unsigned int lengthOfHash = 0;
-
-  // Using the OpenSSL EVP (ENVELOPE) library to hash the key with
-  // sha256
-  EVP_MD_CTX *context = EVP_MD_CTX_new();
-  if (context != nullptr) {
-    if (EVP_DigestInit_ex(context, EVP_sha256(), nullptr)) {
-
-      // If its a string
-      if constexpr (std::is_same<K, std::string>::value) {
-        EVP_DigestUpdate(context, key.c_str(), key.length());
-      }
-
-      // For other values interpret as byte arrays
-      else {
-        EVP_DigestUpdate(context, &key, sizeof(K));
-      }
-
-      if (EVP_DigestFinal_ex(context, hash, &lengthOfHash)) {
-        EVP_MD_CTX_free(context);
- 
-        uint64_t high = 0;
-        uint64_t low = 0;
-
-        if (lengthOfHash >= 16) {
-          for (unsigned int i = 0; i < 8; i++) {
-            high = (high << 8) | hash[i];
-          }
-
-          for (unsigned int i = 8; i < 16; i++) {
-            low = (low << 8) | hash[i];
-          }
-        }
-
-        uint64_t result = high ^ low; // XOR the high and low parts of the hash
-        return result % table.size();
-      }
-    }
-    EVP_MD_CTX_free(context);
-  }
-
-  // If we reach this, the hash failed
-  return 0;
+template <typename K, typename V> int HashTable<K, V>::hash(const K &k) {
+  return hasher.hash(k, table.size());
 }
 
 // Simple resize function that will double the size of the table
@@ -109,7 +64,7 @@ void HashTable<K, V>::insert(const K &key, const V &value) {
   count++;
 }
 
-template <typename K, typename V> V HashTable<K, V>::get(const K &key) {
+template <typename K, typename V> std::optional<V> HashTable<K, V>::get(const K &key) {
   // Convert the key to an index
   int index = hash(key);
   // Access the bucket at the index and return the value if the key exists
@@ -118,7 +73,7 @@ template <typename K, typename V> V HashTable<K, V>::get(const K &key) {
       return pair.second;
     }
   }
-  return "";
+  return nullptr;
 }
 
 template <typename K, typename V> void HashTable<K, V>::remove(const K &key) {
