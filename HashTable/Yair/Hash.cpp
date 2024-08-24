@@ -2,8 +2,6 @@
 #include <openssl/evp.h>
 #include <string>
 
-template <class T> Hash<T>::Hash(){};
-
 template <class T> int Hash<T>::hash(const T &key, const int size) {
   // Unsigned values are used since at 8-bits they go from 0-255 instead
   // of -128 to 127 Since hash values are usually represented as bytes, we can
