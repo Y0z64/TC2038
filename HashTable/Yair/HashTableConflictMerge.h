@@ -1,4 +1,5 @@
 #include "Hash.h"
+#include <functional>
 #include <iostream>
 #include <openssl/evp.h>
 #include <optional>
@@ -10,19 +11,28 @@ private:
   int INITIAL_SIZE = 10;
   double LOAD_FACTOR = 0.8;
 
+  bool no_hash;
+
   std::vector<std::vector<std::pair<K, V>>> table;
   int size;
   int count;
   Hash<K> hasher;
 
-  int hash(const K &k);
+  std::function<int(const K &)> hash;
+
+  int defaultHash(const K &k);
+  int noHash(const K &k);
 
   // Simple resize function that will double the size of the table
   void resize();
 
 public:
   // Initialize the Hashtable to 0 and resize it to the initial value
-  HashTable() : size(INITIAL_SIZE), count(0), hasher() { table.resize(size); };
+  HashTable()
+      : size(INITIAL_SIZE), count(0), hasher(),
+        hash([this](const K &k) { return hasher.hash(k, table.size()); }) {
+    table.resize(size);
+  };
 
   void insert(const K &key, const V &value);
 
@@ -36,11 +46,21 @@ public:
 
   double getCurrentLoadFactor() const { return double(count) / size; };
 
+  std::vector<std::vector<std::pair<K, V>>> getTable() const { return table; };
+
   void display();
 };
 
-template <typename K, typename V> int HashTable<K, V>::hash(const K &k) {
+template <typename K, typename V> int HashTable<K, V>::defaultHash(const K &k) {
   return hasher.hash(k, table.size());
+}
+
+template <typename K, typename V> int HashTable<K, V>::noHash(const K &k) {
+  if (std::is_integral<K>::value) {
+    return k;
+  } else {
+    return 0;
+  }
 }
 
 // Simple resize function that will double the size of the table
@@ -84,13 +104,16 @@ void HashTable<K, V>::insert(const K &key, const V &value) {
   count++;
 }
 
-template <typename K, typename V> std::optional<V> HashTable<K, V>::get(const K &key) {
+template <typename K, typename V>
+std::optional<V> HashTable<K, V>::get(const K &key) {
   // Convert the key to an index
   int index = hash(key);
   // Access the bucket at the index and return the value if the key exists
-  for (const auto &pair : table[index]) {
-    if (pair.first == key) {
-      return pair.second;
+  for (const std::vector<std::pair<K, V>> vec : table[index]) {
+    for (const std::pair pair : vec)
+    {
+      if(pair->first == key)
+        return pair->second;
     }
   }
   return nullptr;
